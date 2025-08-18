@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: dbt_ai
+    database: snfdb
+    schema: dbt_snaidu
+    tables:
+      - name: raw_customers
+      - name: raw_orders

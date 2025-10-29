@@ -1,61 +1,54 @@
-with customers as (
+with
+    customers as (select * from {{ ref("stg_jaffle_shop__customers") }}),
 
-     select * from {{ ref('stg_jaffle_shop__customers') }}
+    orders as (select * from {{ ref("stg_jaffle_shop__orders") }}),
 
-),
+    customer_orders as (
 
-orders as ( 
+        select
+            customer_id,
+            min(order_date) as first_order_date,
+            max(order_date) as most_recent_order_date,
+            count(order_id) as number_of_orders,
+            sum(total_cost) as total_amount
 
-    select * from {{ ref('stg_jaffle_shop__orders') }}
+        from orders
 
-),
+        group by 1
 
-customer_orders as (
+    ),
 
-    select
-        customer_id,
-        min(order_date) as first_order_date,
-        max(order_date) as most_recent_order_date,
-        count(order_id) as number_of_orders,
-        sum(total_cost) as total_amount
-        
+    customer_tiers as (
 
-    from orders
+        select
+            customer_id,
+            case
+                when total_amount >= 1000
+                then 'gold'
+                when total_amount >= 500
+                then 'silver'
+                else 'bronze'
+            end as tier
 
-    group by 1
+        from customer_orders
 
-),
+    ),
 
-customer_tiers as (
+    final as (
+        select
+            customers.customer_id,
+            concat(customers.first_name, ' ', customers.last_name) as full_name,
+            customer_orders.first_order_date,
+            customer_orders.most_recent_order_date,
+            coalesce(customer_orders.number_of_orders, 0) as number_of_orders,
+            customer_tiers.tier
 
-    select
-        customer_id,
-        case
-            when total_amount >= 1000 then 'gold'
-            when total_amount >= 500 then 'silver'
-            else 'bronze'
-        end as tier
+        from customers
 
-    from customer_orders
+        left join customer_orders using (customer_id)
+        left join customer_tiers using (customer_id)
 
-),
+    )
 
-
-final as(
-    select
-        customers.customer_id,
-        CONCAT(customers.first_name, ' ', customers.last_name) AS full_name,
-        customer_orders.first_order_date,
-        customer_orders.most_recent_order_date,
-        coalesce (customer_orders.number_of_orders, 0) 
-        as number_of_orders,
-        customer_tiers.tier
-
-    from customers
-
-    left join customer_orders using (customer_id) 
-    left join customer_tiers using (customer_id)
-
-)
-
-select * from final
+select *
+from final

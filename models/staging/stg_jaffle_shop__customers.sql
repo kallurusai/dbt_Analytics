@@ -1,5 +1,30 @@
-select
-    c1 as customer_id,
-    c2 as full_name
+with raw_customers as (
 
-from {{ source('dbt_ai', 'raw_customers') }}
+    select
+        customer_id,
+        first_name,
+        last_name,
+        email,
+        created_at
+    from
+        {{ source('dbt_ai', 'raw_customers') }}
+
+),
+
+staging_customers as (
+
+    select
+        customer_id,
+        first_name,
+        last_name,
+        email,
+        created_at
+    from
+        raw_customers
+
+)
+
+select
+    *
+from
+    staging_customers

@@ -1,7 +1,7 @@
 select
-    id as order_id,
-    customer as customer_id,
-    ordered_at as order_date,
-    store_id
+    order_id,
+    customer_id,
+    order_date,
+    total_cost
 
 from  {{ source('dbt_ai', 'raw_orders') }}
